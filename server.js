@@ -1,8 +1,8 @@
 const express = require("express");
 const app = express();
 app.use(express.urlencoded({extended : true}));
-
 const MongoClient = require("mongodb").MongoClient;
+app.set('view engine', 'ejs');
 
 var db;
 MongoClient.connect('mongodb+srv://pmc0814:ajaxno9park@todoapp.4ssap.mongodb.net/todoapp?retryWrites=true&w=majority',{ useUnifiedTopology: true }, function(err, client) {
@@ -25,15 +25,37 @@ app.get('/write', function(req, res) {
 });
 
 
-db.collection("post").insertOne( {_id : 100, 이름 : "박민찬", 나이 : 25}, function(err, result) {
-    console.log("저장완료!");
-});
 
 
 app.post('/add', function(req, res) {
     res.send("전송!");
-    db.collection("post").insertOne( {_id : 200, "할 일": req.body.todo, 기한: req.body.date }, function(err, result) {
-        console.log("저장완료!");
+    db.collection("counter").findOne({name : '게시물개수'}, function(err, result) {
+        var postNum = result.totalPost;
+
+        db.collection("post").insertOne( { _id : postNum + 1, 할일: req.body.todo, 기한: req.body.date }, function(err, result) {
+            db.collection('counter').updateOne({name: '게시물개수'}, { $inc : {totalPost : 1} }, function(err, result){
+                if (err) {return console.log(err)}
+            });
+        });
+
     });
 }); 
 
+
+
+app.get('/list', function(req, res) {
+
+    db.collection('post').find().toArray(function(err, result) {
+        console.log(result);
+    res.render('list.ejs', { posts : result });
+    });
+});
+
+app.delete('/delete', function(req, res) {
+    console.log(req.body);
+    req.body._id = parseInt(req.body._id);
+    db.collection('post').deleteOne( req.body, function(err, result) {
+        console.log("done!");
+    });
+
+});
