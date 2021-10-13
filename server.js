@@ -4,6 +4,8 @@ app.use(express.urlencoded({extended : true}));
 const MongoClient = require("mongodb").MongoClient;
 app.set('view engine', 'ejs');
 
+app.use('/public', express.static('public'));
+
 var db;
 MongoClient.connect('mongodb+srv://pmc0814:ajaxno9park@todoapp.4ssap.mongodb.net/todoapp?retryWrites=true&w=majority',{ useUnifiedTopology: true }, function(err, client) {
     if (err) {return console.log(err)};
@@ -17,11 +19,11 @@ MongoClient.connect('mongodb+srv://pmc0814:ajaxno9park@todoapp.4ssap.mongodb.net
 
 
 app.get('/', function(req, res) {
-    res.sendFile(__dirname + '/index.html');
+    res.render(__dirname + '/views/index.ejs');
 });
 
 app.get('/write', function(req, res) {
-    res.sendFile(__dirname + '/write.html');
+    res.render(__dirname + '/views/write.ejs');
 });
 
 
@@ -56,6 +58,13 @@ app.delete('/delete', function(req, res) {
     req.body._id = parseInt(req.body._id);
     db.collection('post').deleteOne( req.body, function(err, result) {
         console.log("done!");
+        res.status(200).send({ message : 'success!' });
     });
 
+});
+
+app.get('/detail/:id', function(req, res) {
+    db.collection('post').findOne({_id : parseInt(req.params.id)}, function(err, result) { 
+        res.render('detail.ejs', { data : result });
+    });
 });
